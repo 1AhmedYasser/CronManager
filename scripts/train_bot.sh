@@ -7,20 +7,20 @@ echo $(date -u +"%Y-%m-%d %H:%M:%S.%3NZ") - $script_name started
 # POST request to merge training yaml files
 curl -X POST -H "Content-Type: application/json" -d '{"file_path":"'$TRAINING_FILES_PATH'"}' "$TRAINING_DMAPPER/mergeYaml" > temp
 
-checksum=$(curl -X POST -H "Content-Type: text/plain" --data-binary @temp "$TRAINING_DMAPPER/utils/calculate-sha256-checksum")
-echo "checking checksum"
-echo $checksum
+#checksum=$(curl -X POST -H "Content-Type: text/plain" --data-binary @temp "$TRAINING_DMAPPER/utils/calculate-sha256-checksum")
+##echo "checking checksum"
+#echo $checksum
 
 resql_response=$(curl -X POST -H "Content-Type: application/json" "$TRAINING_RESQL/get-latest-ready-model")
 if [ "$resql_response" != [] ]; then
     training_data_checksum=$(echo "$resql_response" | grep -o '"trainingDataChecksum":"[^"]*' | grep -o '[^"]*$')
 fi
 
-if [ "$training_data_checksum" == "$checksum" ]; then
-    already_trained_res=$(curl -H "x-ruuter-skip-authentication: true" "$TRAINING_PUBLIC_RUUTER/rasa/model/add-new-model-already-trained")
-    echo $(date -u +"%Y-%m-%d %H:%M:%S.%3NZ") - $already_trained_res
-    exit 1
-fi
+#if [ "$training_data_checksum" == "$checksum" ]; then
+#    already_trained_res=$(curl -H "x-ruuter-skip-authentication: true" "$TRAINING_PUBLIC_RUUTER/rasa/model/add-new-model-already-trained")
+#    echo $(date -u +"%Y-%m-%d %H:%M:%S.%3NZ") - $already_trained_res
+#    exit 1
+#fi
 
 processing_res=$(curl -H "x-ruuter-skip-authentication: true" "$TRAINING_PUBLIC_RUUTER/rasa/model/add-new-model-processing")
 echo $(date -u +"%Y-%m-%d %H:%M:%S.%3NZ") - $processing_res
@@ -98,7 +98,7 @@ if $test; then
 add_new_model_body_dto='{"fileName":"'$trained_model_filename'","testReport":'$test_body',"crossValidationReport":'$cross_validate_body',"trainingDataChecksum":"'$checksum'"}'
 echo "did do the test"
 else
-add_new_model_body_dto='{"fileName":"'$trained_model_filename'","testReport":{},"crossValidationReport":{},"trainingDataChecksum":"'$checksum'"}'
+add_new_model_body_dto='{"fileName":"'$trained_model_filename'","testReport":{},"crossValidationReport":{},"trainingDataChecksum":{}}'
 echo "did not do test"
 echo $add_new_model_body_dto
 fi
