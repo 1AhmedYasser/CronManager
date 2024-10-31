@@ -8,6 +8,8 @@ echo $(date -u +"%Y-%m-%d %H:%M:%S.%3NZ") - $script_name started
 curl -X POST -H "Content-Type: application/json" -d '{"file_path":"'$TRAINING_FILES_PATH'"}' "$TRAINING_DMAPPER/mergeYaml" > temp
 
 checksum=$(curl -X POST -H "Content-Type: text/plain" --data-binary @temp "$TRAINING_DMAPPER/utils/calculate-sha256-checksum")
+echo "checking checksum"
+echo $checksum
 
 resql_response=$(curl -X POST -H "Content-Type: application/json" "$TRAINING_RESQL/get-latest-ready-model")
 if [ "$resql_response" != [] ]; then
