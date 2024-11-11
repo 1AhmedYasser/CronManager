@@ -101,7 +101,7 @@ fi
 add_new_model_body_dto='{"fileName":"'$trained_model_filename'","testReport":{},"crossValidationReport":{},"trainingDataChecksum":{}}'
 echo "did not do test"
 echo $add_new_model_body_dto
-fi
+#fi
 ready_res=$(curl -X POST -H "x-ruuter-skip-authentication: true" -H "Content-Type: application/json" -d "$add_new_model_body_dto" "$TRAINING_PUBLIC_RUUTER/rasa/model/add-new-model-ready")
 echo $(date -u +"%Y-%m-%d %H:%M:%S.%3NZ") - $ready_res
 
