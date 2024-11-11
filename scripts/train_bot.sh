@@ -38,7 +38,8 @@ if [ "$train_status" != "200" ]; then
     exit 1
 fi
 
-if $test; then
+#if $test; then
+if $placehondervalue; then
 # PUT request to load currently trained model in RASA
 load_status=$(curl -s -w "%{http_code}" -X PUT -H "Content-Type: application/json" -d '{"model_file":"/app/models/'$trained_model_filename'"}' "$TRAINING_RASA/model")
 if [ "$load_status" != "204" ]; then
