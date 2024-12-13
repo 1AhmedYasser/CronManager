@@ -4,6 +4,12 @@ pwd
 echo $(date -u +"%Y-%m-%d %H:%M:%S.%3NZ") - $script_name started
 . constants.ini
 
+get_new_nonce() {
+  response=$(curl -s -X POST -H "Content-Type: application/json" "$TRAINING_RESQL/get-new-nonce")
+  nonce=$(echo "$response" |grep -Eo "([a-f0-9-]+-){4}[a-f0-9-]+")
+  echo "$nonce"
+}
+
 # POST request to merge training yaml files
 curl -X POST -H "Content-Type: application/json" -d '{"file_path":"'$TRAINING_FILES_PATH'"}' "$TRAINING_DMAPPER/mergeYaml" > temp
 
@@ -15,12 +21,12 @@ if [ "$resql_response" != [] ]; then
 fi
 
 if [ "$training_data_checksum" == "$checksum" ]; then
-    already_trained_res=$(curl -H "x-ruuter-skip-authentication: true" "$TRAINING_PUBLIC_RUUTER/rasa/model/add-new-model-already-trained")
+    already_trained_res=$(curl -H "x-ruuter-nonce: $(get_new_nonce)" "$TRAINING_PUBLIC_RUUTER/rasa/model/add-new-model-already-trained")
     echo $(date -u +"%Y-%m-%d %H:%M:%S.%3NZ") - $already_trained_res
     exit 1
 fi
 
-processing_res=$(curl -H "x-ruuter-skip-authentication: true" "$TRAINING_PUBLIC_RUUTER/rasa/model/add-new-model-processing")
+processing_res=$(curl -H "x-ruuter-nonce: $(get_new_nonce)" "$TRAINING_PUBLIC_RUUTER/rasa/model/add-new-model-processing")
 echo $(date -u +"%Y-%m-%d %H:%M:%S.%3NZ") - $processing_res
 
 # POST request to train model in RASA
@@ -31,7 +37,7 @@ trained_model_filename=$(echo "$trained_model_filename" | tr -d '\r')
 
 if [ "$train_status" != "200" ]; then
     echo "Model training failed with status code $train_status"
-    error_res=$(curl -H "x-ruuter-skip-authentication: true" "$TRAINING_PUBLIC_RUUTER/rasa/model/add-new-model-error")
+    error_res=$(curl -H "x-ruuter-nonce: $(get_new_nonce)" "$TRAINING_PUBLIC_RUUTER/rasa/model/add-new-model-error")
     echo $(date -u +"%Y-%m-%d %H:%M:%S.%3NZ") - $error_res
     exit 1
 fi
@@ -41,12 +47,12 @@ if $test; then
 load_status=$(curl -s -w "%{http_code}" -X PUT -H "Content-Type: application/json" -d '{"model_file":"/app/models/'$trained_model_filename'"}' "$TRAINING_RASA/model")
 if [ "$load_status" != "204" ]; then
     echo "Model loading failed with status code $load_status"
-    error_res=$(curl -H "x-ruuter-skip-authentication: true" "$TRAINING_PUBLIC_RUUTER/rasa/model/add-new-model-error")
+    error_res=$(curl -H "x-ruuter-nonce: $(get_new_nonce)" "$TRAINING_PUBLIC_RUUTER/rasa/model/add-new-model-error")
     echo $(date -u +"%Y-%m-%d %H:%M:%S.%3NZ") - $error_res
     exit 1
 fi
 
-testing_res=$(curl -H "x-ruuter-skip-authentication: true" "$TRAINING_PUBLIC_RUUTER/rasa/model/add-new-model-testing")
+testing_res=$(curl -H "x-ruuter-nonce: $(get_new_nonce)" "$TRAINING_PUBLIC_RUUTER/rasa/model/add-new-model-testing")
 echo $(date -u +"%Y-%m-%d %H:%M:%S.%3NZ") - $testing_res
 
 # POST request to merge testing yaml files
@@ -57,13 +63,13 @@ test_response=$(curl -s -w "%{http_code}" -X POST -d "$test_yaml" "$TRAINING_RAS
 test_status="${test_response: -3}"
 if [ "$test_status" != "200" ]; then
     echo "Model testing failed with status code $test_status"
-    error_res=$(curl -H "x-ruuter-skip-authentication: true" "$TRAINING_PUBLIC_RUUTER/rasa/model/add-new-model-error")
+    error_res=$(curl -H "x-ruuter-nonce: $(get_new_nonce)" "$TRAINING_PUBLIC_RUUTER/rasa/model/add-new-model-error")
     echo $(date -u +"%Y-%m-%d %H:%M:%S.%3NZ") - $error_res
     exit 1
 fi
 test_body="${test_response:: -3}"
 
-cv_res=$(curl -H "x-ruuter-skip-authentication: true" "$TRAINING_PUBLIC_RUUTER/rasa/model/add-new-model-cross-validating")
+cv_res=$(curl -H "x-ruuter-nonce: $(get_new_nonce)" "$TRAINING_PUBLIC_RUUTER/rasa/model/add-new-model-cross-validating")
 echo $(date -u +"%Y-%m-%d %H:%M:%S.%3NZ") - $cv_res
 
 # POST request to merge cross validating yaml files
@@ -75,7 +81,7 @@ cross_validate_status="${cross_validate_response: -3}"
 
 if [ "$cross_validate_status" != "200" ]; then
     echo "Model cross validating failed with status code $cross_validate_status"
-    error_res=$(curl -H "x-ruuter-skip-authentication: true" "$TRAINING_PUBLIC_RUUTER/rasa/model/add-new-model-error")
+    error_res=$(curl -H "x-ruuter-nonce: $(get_new_nonce)" "$TRAINING_PUBLIC_RUUTER/rasa/model/add-new-model-error")
     echo $(date -u +"%Y-%m-%d %H:%M:%S.%3NZ") - $error_res
     exit 1
 fi
@@ -87,7 +93,7 @@ copy_file_response=$(curl -s -w "%{http_code}" -X POST -H "Content-Type: applica
 copy_file_status="${copy_file_response: -3}"
 if [ "$copy_file_status" != "201" ]; then
     echo "Copying file from local to remote storage failed with status code $copy_file_status"
-    error_res=$(curl -H "x-ruuter-skip-authentication: true" "$TRAINING_PUBLIC_RUUTER/rasa/model/add-new-model-error")
+    error_res=$(curl -H "x-ruuter-nonce: $(get_new_nonce)" "$TRAINING_PUBLIC_RUUTER/rasa/model/add-new-model-error")
     echo $(date -u +"%Y-%m-%d %H:%M:%S.%3NZ") - $error_res
     exit 1
 fi
@@ -97,7 +103,7 @@ add_new_model_body_dto='{"fileName":"'$trained_model_filename'","testReport":'$t
 else
 add_new_model_body_dto='{"fileName":"'$trained_model_filename'","testReport":{},"crossValidationReport":{},"trainingDataChecksum":"'$checksum'"}'
 fi
-ready_res=$(curl -X POST -H "x-ruuter-skip-authentication: true" -H "Content-Type: application/json" -d "$add_new_model_body_dto" "$TRAINING_PUBLIC_RUUTER/rasa/model/add-new-model-ready")
+ready_res=$(curl -X POST -H "x-ruuter-nonce: $(get_new_nonce)" -H "Content-Type: application/json" -d "$add_new_model_body_dto" "$TRAINING_PUBLIC_RUUTER/rasa/model/add-new-model-ready")
 echo $(date -u +"%Y-%m-%d %H:%M:%S.%3NZ") - $ready_res
 
 rm /data/$trained_model_filename
