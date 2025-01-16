@@ -94,10 +94,15 @@ fi
 
 if $test; then
 add_new_model_body_dto='{"fileName":"'$trained_model_filename'","testReport":'$test_body',"crossValidationReport":'$cross_validate_body',"trainingDataChecksum":"'$checksum'"}'
+echo "did do the test"
+echo $add_new_model_body_dto
 else
 add_new_model_body_dto='{"fileName":"'$trained_model_filename'","testReport":{},"crossValidationReport":{},"trainingDataChecksum":"'$checksum'"}'
+echo "did not do test"
+echo $add_new_model_body_dto
 fi
 ready_res=$(curl -X POST -H "x-ruuter-skip-authentication: true" -H "Content-Type: application/json" -d "$add_new_model_body_dto" "$TRAINING_PUBLIC_RUUTER/rasa/model/add-new-model-ready")
+echo $ready_res
 echo $(date -u +"%Y-%m-%d %H:%M:%S.%3NZ") - $ready_res
 
 rm /data/$trained_model_filename
