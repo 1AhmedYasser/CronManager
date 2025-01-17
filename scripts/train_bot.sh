@@ -99,9 +99,9 @@ echo $add_new_model_body_dto
 else
 add_new_model_body_dto='{"fileName":"'$trained_model_filename'","testReport":{},"crossValidationReport":{},"trainingDataChecksum":"'$checksum'"}'
 echo "did not do test"
-echo $add_new_model_body_dto
+echo "$add_new_model_body_dto" > temp3 || echo "failed to make file temp3"
 fi
-ready_res=$(curl -X POST -H "x-ruuter-skip-authentication: true" -H "Content-Type: application/json" -d "$add_new_model_body_dto" "$TRAINING_PUBLIC_RUUTER/rasa/model/add-new-model-ready")
+ready_res=$(curl -X POST -H "x-ruuter-skip-authentication: true" -H "Content-Type: application/json" --data-binary @temp3 "$TRAINING_PUBLIC_RUUTER/rasa/model/add-new-model-ready") || echo "failed to send to ruuter"
 echo $ready_res
 echo $(date -u +"%Y-%m-%d %H:%M:%S.%3NZ") - $ready_res
 
