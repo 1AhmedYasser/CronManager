@@ -95,7 +95,7 @@ fi
 if $test; then
 add_new_model_body_dto='{"fileName":"'$trained_model_filename'","testReport":'$test_body',"crossValidationReport":'$cross_validate_body',"trainingDataChecksum":"'$checksum'"}'
 echo "did do the test"
-echo $add_new_model_body_dto
+echo "$add_new_model_body_dto" > temp3 || echo "failed to make file temp3"
 else
 add_new_model_body_dto='{"fileName":"'$trained_model_filename'","testReport":{},"crossValidationReport":{},"trainingDataChecksum":"'$checksum'"}'
 echo "did not do test"
@@ -108,4 +108,5 @@ echo $(date -u +"%Y-%m-%d %H:%M:%S.%3NZ") - $ready_res
 rm /data/$trained_model_filename
 rm temp
 rm temp2
+rm temp3
 echo $(date -u +"%Y-%m-%d %H:%M:%S.%3NZ") - $script_name finished
