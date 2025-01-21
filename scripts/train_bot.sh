@@ -93,7 +93,7 @@ if [ "$copy_file_status" != "201" ]; then
 fi
 
 if $test; then
-add_new_model_body_dto='{"fileName":"'$trained_model_filename'","testReport":{},"crossValidationReport":{},"trainingDataChecksum":"'$checksum'"}'
+add_new_model_body_dto='{"fileName":"'$trained_model_filename'","testReport":{},"crossValidationReport":{},"trainingDataChecksum":"''stuff"}'
 echo "did do the test"
 echo "$add_new_model_body_dto" > temp3 || echo "failed to make file temp3"
 else
