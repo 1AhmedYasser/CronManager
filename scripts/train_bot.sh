@@ -13,18 +13,21 @@ get_new_nonce() {
 # POST request to merge training yaml files
 curl -X POST -H "Content-Type: application/json" -d '{"file_path":"'$TRAINING_FILES_PATH'"}' "$TRAINING_DMAPPER/mergeYaml" > temp
 
-checksum=$(curl -X POST -H "Content-Type: text/plain" --data-binary @temp "$TRAINING_DMAPPER/utils/calculate-sha256-checksum")
+#### To be replaced
+# checksum=$(curl -X POST -H "Content-Type: text/plain" --data-binary @temp "$TRAINING_DMAPPER/utils/calculate-sha256-checksum")
 
-resql_response=$(curl -X POST -H "Content-Type: application/json" "$TRAINING_RESQL/get-latest-ready-model")
-if [ "$resql_response" != [] ]; then
-    training_data_checksum=$(echo "$resql_response" | grep -o '"trainingDataChecksum":"[^"]*' | grep -o '[^"]*$')
-fi
+# to be replaced
+# resql_response=$(curl -X POST -H "Content-Type: application/json" "$TRAINING_RESQL/get-latest-ready-model")
+# if [ "$resql_response" != [] ]; then
+#     training_data_checksum=$(echo "$resql_response" | grep -o '"trainingDataChecksum":"[^"]*' | grep -o '[^"]*$')
+# fi
 
-if [ "$training_data_checksum" == "$checksum" ]; then
-    already_trained_res=$(curl -H "x-ruuter-nonce: $(get_new_nonce)" "$TRAINING_PUBLIC_RUUTER/rasa/model/add-new-model-already-trained")
-    echo $(date -u +"%Y-%m-%d %H:%M:%S.%3NZ") - $already_trained_res
-    exit 1
-fi
+#### To be replaced
+# if [ "$training_data_checksum" == "$checksum" ]; then
+#     already_trained_res=$(curl -H "x-ruuter-nonce: $(get_new_nonce)" "$TRAINING_PUBLIC_RUUTER/rasa/model/add-new-model-already-trained")
+#     echo $(date -u +"%Y-%m-%d %H:%M:%S.%3NZ") - $already_trained_res
+#     exit 1
+# fi
 
 processing_res=$(curl -H "x-ruuter-nonce: $(get_new_nonce)" "$TRAINING_PUBLIC_RUUTER/rasa/model/add-new-model-processing")
 echo $(date -u +"%Y-%m-%d %H:%M:%S.%3NZ") - $processing_res
@@ -99,9 +102,9 @@ if [ "$copy_file_status" != "201" ]; then
 fi
 
 if $test; then
-add_new_model_body_dto='{"fileName":"'$trained_model_filename'","testReport":'$test_body',"crossValidationReport":'$cross_validate_body',"trainingDataChecksum":"'$checksum'"}'
+add_new_model_body_dto='{"fileName":"'$trained_model_filename'","testReport":'$test_body',"crossValidationReport":'$cross_validate_body',"trainingDataChecksum":""}'
 else
-add_new_model_body_dto='{"fileName":"'$trained_model_filename'","testReport":{},"crossValidationReport":{},"trainingDataChecksum":"'$checksum'"}'
+add_new_model_body_dto='{"fileName":"'$trained_model_filename'","testReport":{},"crossValidationReport":{},"trainingDataChecksum":""}'
 fi
 ready_res=$(curl -X POST -H "x-ruuter-nonce: $(get_new_nonce)" -H "Content-Type: application/json" -d "$add_new_model_body_dto" "$TRAINING_PUBLIC_RUUTER/rasa/model/add-new-model-ready")
 echo $(date -u +"%Y-%m-%d %H:%M:%S.%3NZ") - $ready_res
