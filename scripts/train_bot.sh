@@ -45,7 +45,7 @@ if [ "$train_status" != "200" ]; then
     exit 1
 fi
 
-#if $test; then
+if $test; then
 # PUT request to load currently trained model in RASA
 load_status=$(curl -s -w "%{http_code}" -X PUT -H "Content-Type: application/json" -d '{"model_file":"/app/models/'$trained_model_filename'"}' "$TRAINING_RASA/model")
 if [ "$load_status" != "204" ]; then
@@ -58,8 +58,8 @@ fi
 testing_res=$(curl -H "x-ruuter-nonce: $(get_new_nonce)" "$TRAINING_PUBLIC_RUUTER/rasa/model/add-new-model-testing")
 echo $(date -u +"%Y-%m-%d %H:%M:%S.%3NZ") - $testing_res
 
-## POST request to merge testing yaml files
-#test_yaml=$(curl -X POST -H "Content-Type: application/json" -d '{"file_path":"'$TESTING_FILES_PATH'"}' "$TRAINING_DMAPPER/mergeYaml")
+# POST request to merge testing yaml files
+test_yaml=$(curl -X POST -H "Content-Type: application/json" -d '{"file_path":"'$TESTING_FILES_PATH'"}' "$TRAINING_DMAPPER/mergeYaml")
 
 # POST request to test model in RASA
 test_response=$(curl -s -w "%{http_code}" -X POST -d "$test_yaml" "$TRAINING_RASA/model/test/stories")
@@ -75,12 +75,12 @@ test_body="${test_response:: -3}"
 cv_res=$(curl -H "x-ruuter-nonce: $(get_new_nonce)" "$TRAINING_PUBLIC_RUUTER/rasa/model/add-new-model-cross-validating")
 echo $(date -u +"%Y-%m-%d %H:%M:%S.%3NZ") - $cv_res
 
-## POST request to merge cross validating yaml files
-#curl -X POST -H "Content-Type: application/json" -d '{"file_path":"'$CROSS_VALIDATION_FILES_PATH'"}' "$TRAINING_DMAPPER/mergeYaml" > temp2
+# POST request to merge cross validating yaml files
+curl -X POST -H "Content-Type: application/json" -d '{"file_path":"'$CROSS_VALIDATION_FILES_PATH'"}' "$TRAINING_DMAPPER/mergeYaml" > temp2
 
-## POST request to cross validate model in RASA
-#cross_validate_response=$(curl -s -w "%{http_code}" -X POST -H "Content-Type: application/x-yaml" --data-binary @temp2 "$TRAINING_RASA/model/test/intents?cross_validation_folds=2")
-#cross_validate_status="${cross_validate_response: -3}"
+# POST request to cross validate model in RASA
+cross_validate_response=$(curl -s -w "%{http_code}" -X POST -H "Content-Type: application/x-yaml" --data-binary @temp2 "$TRAINING_RASA/model/test/intents?cross_validation_folds=2")
+cross_validate_status="${cross_validate_response: -3}"
 
 if [ "$cross_validate_status" != "200" ]; then
     echo "Model cross validating failed with status code $cross_validate_status"
