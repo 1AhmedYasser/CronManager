@@ -2,7 +2,7 @@ name: Build and publish GUI
 
 on:
   push:
-    branches: [ not-client ]
+    branches: [ dev ]
     paths:
       - '.env.img'
 
